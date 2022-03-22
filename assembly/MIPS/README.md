@@ -10,3 +10,7 @@ It illustrates how to storage and load memory from address using or not pseudo i
 
 ### [Example 3](./example3) - Basic
 It illustrates how to create if-then-else and for/while functions on assembly.
+
+### [Example 4](./example4) - Mars Software
+It shows how to use Digital Lab Sim from MARS software.
+
