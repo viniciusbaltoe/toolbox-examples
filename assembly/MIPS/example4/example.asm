@@ -40,7 +40,7 @@ Loop:
 	j	Loop
 
 Translate:
-	# Traduz o cÛdigo recebido para hexadecimal
+	# Traduz o c√≥digo recebido para hexadecimal
 	beq	$t1,	0x21,	T1
 	beq	$t1,	0x41,	T2
 	beq	$t1,	0x81,	T3
@@ -105,10 +105,10 @@ Tf:
 
 	
 Print:
-	div 	$t7,	$t2	# Divide a matrÌcula pelo int recebido
-	mfhi 	$t3 	# Resto da divis„o #
+	div 	$t7,	$t2	# Divide a matr√≠cula pelo int recebido
+	mfhi 	$t3 	# Resto da divis√£o #
 	
-	# Traduz o hexadecimal para o cÛdigo de print
+	# Traduz o hexadecimal para o c√≥digo de print
 	beq	$t3,	0,	T_0
 	beq	$t3,	1,	T_1
 	beq	$t3,	2,	T_2
