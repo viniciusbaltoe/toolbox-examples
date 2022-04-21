@@ -6,5 +6,5 @@
 It illustrates how to create a data_base using python-SQL.
 
 ### [Example 2](./example2) - Basic
-It illustrates how to how to create a data_base and add data, and show it with pandas.
+It illustrates how to create a data_base and add data, and show it with pandas.
 
