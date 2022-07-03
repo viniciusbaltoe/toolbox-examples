@@ -20,8 +20,6 @@ segment code
     mov     	al,12h
    	mov     	ah,0
     int     	10h
-	
-;
 ;
 ; Desenho das retas divisórias
     mov		byte[cor], branco_intenso
@@ -195,7 +193,10 @@ segment code
 			; Pintar de Amarelo
 				mov		byte[cor], amarelo
 				call print_pbaixas
-			;
+			; Limpar janela dos filtros
+				call limpa_filtro
+			; Filtro
+				call filtro_pbaixa
 			; Retorno ao loop
 				jmp wait_mouse_click
 	; Click Passa-Altas
@@ -519,7 +520,7 @@ segment code
 				loop 	coluna_x					; Interrompe o loop para [x_value] = 300
 
 				dec 	word[y_value]				; A referência é superior esquerda
-				mov 	word[x_value],	0			; X volta a ser zero, será printada outra linha
+				mov 	word[x_value],		0		; X volta a ser zero, será printada outra linha
 				pop 	cx							; Elimina o valor de x
 				loop 	linha_y						; Interrompe o loop para [y_value] = 300
 		; Fim da Leitura e Fechamento do Arquivo
@@ -764,6 +765,373 @@ segment code
 		;		pop		ax
 		;		popf
 		;	ret
+;___________________________________________________________________________
+;	FUNÇÃO FILTRO_PBAIXA
+		filtro_pbaixa:
+			; push's
+				pushf
+				push 		ax
+				push 		bx
+				push		cx
+				push		dx
+				push		si
+				push		di
+				push		bp
+			; Verifica se a Img já foi aberta
+				cmp 	byte[img_ok], 	0
+				jne		continue_pbaixa
+				; pop's
+					pop		bp
+					pop		di
+					pop		si
+					pop		dx
+					pop		cx
+					pop		bx
+					pop		ax
+					popf
+				ret
+				continue_pbaixa:
+			; Filtro
+				call 	read_first_3_lines
+				mov 	word[x_value],		0
+				mov 	word[y_value],		0
+				mov 	bx,					0
+				mov 	cx,					300
+				; Pinta a primeira linha de preto
+					fpb_first_line:
+						xor 	ax,		ax
+						xor 	dx,		dx
+						mov 	al,		byte[second_line+bx]
+						mov 	dl,		byte[second_line+bx+1]
+						add 	ax,		dx
+						mov 	dl,		byte[second_line+bx-1]
+						add 	ax,		dx
+						mov 	dl,		byte[first_line+bx]
+						add 	ax,		dx
+						mov 	dl,		byte[first_line+bx+1]
+						add 	ax,		dx
+						mov 	dl,		byte[first_line+bx-1]
+						add 	ax,		dx
+						mov 	dl,		byte[third_line+bx]
+						add 	ax,		dx
+						mov 	dl,		byte[third_line+bx+1]
+						add 	ax,		dx
+						mov 	dl,		byte[third_line+bx-1]
+						add 	ax,		dx
+						mov 	dl,					9
+						div 	dl
+						mov 	[current_byte],		al
+						call 	print_filtros
+						inc 	word[x_value]
+						inc 	bx
+						loop 	fpb_first_line
+				; Linhas seguintes
+					dec word[y_value]
+					mov word[x_value],0  
+					mov cx,298
+					fpb_next_lines:
+						push cx
+						call read_3_lines
+						mov bx,0
+						fpb_colunas:
+							xor 	ax,		ax
+							xor 	dx,		dx
+							mov 	al,		byte[second_line+bx]
+							mov 	dl,		byte[second_line+bx+1]
+							add 	ax,		dx
+							mov 	dl,		byte[second_line+bx-1]
+							add 	ax,		dx
+							mov 	dl,		byte[first_line+bx]
+							add 	ax,		dx
+							mov 	dl,		byte[first_line+bx+1]
+							add 	ax,		dx
+							mov 	dl,		byte[first_line+bx-1]
+							add 	ax,		dx
+							mov 	dl,		byte[third_line+bx]
+							add 	ax,		dx
+							mov 	dl,		byte[third_line+bx+1]
+							add 	ax,		dx
+							mov 	dl,		byte[third_line+bx-1]
+							add 	ax,		dx
+							mov 	dl,					9
+							div 	dl
+							mov 	[current_byte],		al
+							call 	print_filtros
+							inc 	word[x_value]
+							inc 	bx
+
+							cmp 	bx,					300
+							jne 	fpb_colunas
+							dec 	word[y_value]
+							mov 	word[x_value],		0
+							pop 	cx
+							loop fpb_next_lines
+
+			; Fim da função
+				; Fechamento do Arquivo
+					mov 	bx,		[handle]
+					mov 	ah,		3eh
+					mov 	al,		00h
+					int 	21h
+				; pop's
+					pop		bp
+					pop		di
+					pop		si
+					pop		dx
+					pop		cx
+					pop		bx
+					pop		ax
+					popf
+				fim_pbaixa:
+					ret
+;___________________________________________________________________________
+;	FUNÇÃO LIMPA_FILTRO
+		limpa_filtro:
+			; push's
+				pushf
+				push 		ax
+				push 		bx
+				push		cx
+				push		dx
+				push		si
+				push		di
+				push		bp
+			mov 	word[y_value],	0
+			mov 	word[x_value],	0
+			mov 	cx,				300			; Quantidade de linhas
+			linha_pbaixa:
+				push 	cx
+				mov 	cx, 			300     ; Quantidade de colunas
+			coluna_pbaixa:
+				;push's
+					push 	ax
+					push 	bx
+					push 	dx
+				mov 	byte[cor],	preto   
+				mov 	bx,			[x_value]
+				add 	bx,			320
+				push 	bx       
+				mov 	bx,			[y_value]
+				add 	bx,			395
+				push 	bx       
+				call 	plot_xy
+				; pop's
+					pop 	dx
+					pop 	bx
+					pop 	ax
+				inc 	word[x_value]
+				loop 	coluna_pbaixa
+				dec 	word[y_value]
+				mov 	word[x_value],0
+				pop 	cx
+				loop 	linha_pbaixa
+			; pop's
+				pop		bp
+				pop		di
+				pop		si
+				pop		dx
+				pop		cx
+				pop		bx
+				pop		ax
+				popf
+			ret
+;___________________________________________________________________________
+;	FUNÇÃO READ_FIRST_3_LINES
+		read_first_3_lines: 
+			; push's
+				pushf
+				push 		ax
+				push 		bx
+				push		cx
+				push		dx
+				push		si
+				push		di
+				push		bp
+			mov 	ah,			3dh        
+			mov 	al,			00h
+			mov 	dx,			file_cores
+			int 	21h
+			mov 	[handle],	ax  
+
+			mov 	bx, 				[handle]
+			mov 	dx, 				buffer      	
+			mov 	cx,					1          		; Qntd de bytes a serem lidos
+			mov 	ah,					3Fh          	; LER Arquivo
+			int 	21h                 
+			mov 	word[bytes_len],	0
+
+			rf3l_first_line:
+				mov 	bx,			[handle]
+				mov 	dx, 		buffer
+				mov 	cx,			1      	
+				mov 	ah,			3Fh    				; LER Arquivo
+				int 	21h       
+				mov 	al, 		[buffer]
+				mov 	[ascii],	al
+				cmp 	al,			20h					; 20h == ' '
+				je 		rf3l_f_num_lido
+				call 	ascii_2_decimal					; O número n terminou de ser lido
+				jmp 	rf3l_first_line
+
+			rf3l_f_num_lido:
+				call 	num_real
+				mov 	ah,					[num_real]
+				mov 	bx,					[bytes_len]
+				mov 	[bx+first_line],	ah
+				inc 	word[bytes_len]
+				cmp 	word[bytes_len],	300
+				jne 	rf3l_first_line
+
+			mov 	word[bytes_len],		0
+			rf3l_second_line:
+				mov 	bx,			[handle]
+				mov 	dx, 		buffer
+				mov 	cx,			1      
+				mov 	ah,			3Fh      
+				int 	21h     	  
+				mov 	al, 		[buffer]
+				mov 	[ascii],	al
+				cmp 	al,			20h
+				je 		rf3l_s_num_lido
+				call 	ascii_2_decimal
+				jmp 	rf3l_second_line
+
+			rf3l_s_num_lido:
+				call 	num_real
+				mov 	ah,					[num_real]
+				mov 	bx,[bytes_len]
+				mov 	[bx+second_line],ah
+				inc 	word[bytes_len]
+				cmp 	word[bytes_len],	300
+				jne 	rf3l_second_line
+
+			mov word[bytes_len],0
+			rf3l_third_line:
+				mov 	bx,			[handle]
+				mov 	dx, 		buffer
+				mov 	cx,			1      
+				mov 	ah,			3Fh      
+				int 	21h       
+				mov 	al, 		[buffer]
+				mov 	[ascii],	al
+				cmp 	al,			20h
+				je 		rf3l_t_num_lido
+				call 	ascii_2_decimal
+				jmp rf3l_third_line
+
+			rf3l_t_num_lido:
+				call 	num_real
+				mov 	ah,					[num_real]
+				mov 	bx,[bytes_len]
+				mov 	[bx+third_line],	ah
+				inc 	word[bytes_len]
+				cmp 	word[bytes_len],	300
+				jne 	rf3l_third_line
+
+			; pop's
+					pop		bp
+					pop		di
+					pop		si
+					pop		dx
+					pop		cx
+					pop		bx
+					pop		ax
+					popf
+			ret
+;___________________________________________________________________________
+;	FUNÇÃO PRINT_FILTROS
+		print_filtros:      
+			; push's
+				pushf
+				push 		ax
+				push 		bx
+				push		cx
+				push		dx
+				push		si
+				push		di
+				push		bp
+			mov 	bl,		16
+			mov 	al,		byte[current_byte]
+			xor 	ah,		ah
+			div 	bl   
+
+			mov 	byte[cor],	al
+			mov 	bx,			[x_value]
+			add 	bx,			320
+			push 	bx   
+			mov 	bx,[y_value]
+			add 	bx,			395
+			push 	bx   
+			call 	plot_xy
+			; pop's
+					pop		bp
+					pop		di
+					pop		si
+					pop		dx
+					pop		cx
+					pop		bx
+					pop		ax
+					popf
+			ret 
+;___________________________________________________________________________
+;	FUNÇÃO READ_3_LINES
+	read_3_lines:
+		; push's
+			pushf
+			push 		ax
+			push 		bx
+			push		cx
+			push		dx
+			push		si
+			push		di
+			push		bp
+		mov 	bx,	0
+		mov 	cx,	300
+		prox_linha:
+			mov 	al,					[second_line+bx]
+			mov 	[first_line+bx],	al						; First_line possui o valor da Second_line
+			mov 	al,					[third_line+bx]
+			mov 	[second_line+bx], 	al						; Second_line possui o valor da Third_line
+			inc 	bx
+			loop prox_linha
+
+		mov 	word[bytes_len],	0
+		read_3_line_loop:
+			mov 	bx,			[handle]
+			mov 	dx,	 		buffer
+			mov 	cx,			1      
+			mov 	ah,			3Fh   
+			int 	21h	
+			cmp 	ax,			cx
+			jne 	exit_r3l       
+			mov 	al, 		[buffer]
+			mov 	[ascii],	al
+			cmp 	al,			20h
+			je 		next_num_r3l
+			call 	ascii_2_decimal
+			jmp 	read_3_line_loop
+
+		next_num_r3l:
+			call num_real
+			mov ah,[valor_real]
+			mov bx,[bytes_len]
+			mov [third_line + bx],ah
+			inc word[bytes_len]
+			cmp word[bytes_len], 300
+			jne read_3_line_loop
+
+		exit_r3l:
+			; pop's
+				pop		bp
+				pop		di
+				pop		si
+				pop		dx
+				pop		cx
+				pop		bx
+				pop		ax
+				popf
+			ret
+	
 ;***************************************************************************
 ;___________________________________________________________________________
 ;   FUNÇÃO CURSOR
@@ -1351,6 +1719,12 @@ bytes_len		dw		0
 ascii			db		0
 
 cores_count		dw		0
+
+first_line  	resb  	300
+second_line    	resb  	300
+third_line  	resb  	300
+current_byte    db		0
+
 ;*************************************************************************
 segment stack stack
 resb 		512
