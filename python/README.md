@@ -7,4 +7,7 @@ It uses OpenCV, numpy, matplotlib, tkinter and seaborn.
 ## [is-ros-translator](https://github.com/viniciusbaltoe/is-ros-translator)
 A service for work in a Intelligent Space that uses many python libraries, ROS, Kubernetes and Docker.
 
+## [Scraping Examples](./scrape_models)
+Scraping data from websites.
+
 ## [SQL Examples](./SQL)
